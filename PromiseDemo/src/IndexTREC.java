@@ -133,8 +133,10 @@ public class IndexTREC {
 			} else {
 				TrecDocIterator docs = new TrecDocIterator(file);
 				Document doc;
-				while ((doc = docs.next()) != null) {
-					writer.addDocument(doc);
+				while (docs.hasNext()) {
+					doc = docs.next();
+					if (doc != null && doc.getField("contents") != null)
+						writer.addDocument(doc);
 				}
 			}
 		}
