@@ -68,3 +68,13 @@ To compute the evaluation measures, do
 
 This will produce a number of quality measures for each individual query, and summary averages.  You will want to refer to the TREC resources linked above to make sense of that.
 The files `default.eval`, `lm.eval` etc. in the `test-data` directory include my output from `trec_eval` and should match what you get.
+
+Caveats
+-------
+
+This represents in no way shape or form a reasonable evaluation or measurement of Lucene as it might be deployed in the wild and used by real users.  The index is very rudimentary, using no structure from the documents.  The queries are naive.  The queries are not enriched at all before sending them against the index, for example by adding lexical affinities or using pseudorelevance feedback.  There is no search interface guiding the actions of users.
+
+In other words, IT'S A DEMO.  This has been a test of the Emergency Cranfield System.  Had this been an actual comparison of tools configured to perform as state-of-the-art search engines, your mileage would vary considerably.  No warranties expressed, implied, or honored.  If it breaks, you get to keep both pieces.  The management assumes no responsibility.
+
+Lucene is available under an Apache license.  The code here is distributed as the same, as it should be since it is straightforwardly derived from the Lucene codebase.  The TREC data herein is public and freely available from NIST, I have repackaged it somewhat to make things easier for the newbie.
+
