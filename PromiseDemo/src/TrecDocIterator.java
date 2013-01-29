@@ -19,11 +19,12 @@ public class TrecDocIterator implements Iterator<Document> {
 	
 	public TrecDocIterator(File file) throws FileNotFoundException {
 		rdr = new BufferedReader(new FileReader(file));
+		System.out.println("Reading " + file.toString());
 	}
 	
 	@Override
 	public boolean hasNext() {
-		return at_eof;
+		return !at_eof;
 	}
 
 	@Override
@@ -31,11 +32,15 @@ public class TrecDocIterator implements Iterator<Document> {
 		Document doc = new Document();
 		StringBuffer sb = new StringBuffer();
 		try {
-			String line = "";
-			Pattern docno_tag = Pattern.compile("<DOCNO>\\s*(\\S+)");
+			String line;
+			Pattern docno_tag = Pattern.compile("<DOCNO>\\s*(\\S+)\\s*<");
 			boolean in_doc = false;
-			while (line != null) {
+			while (true) {
 				line = rdr.readLine();
+				if (line == null) {
+					at_eof = true;
+					break;
+				}
 				if (!in_doc) {
 					if (line.startsWith("<DOC>"))
 						in_doc = true;
@@ -50,12 +55,15 @@ public class TrecDocIterator implements Iterator<Document> {
 
 				Matcher m = docno_tag.matcher(line);
 				if (m.find()) {
-					doc.add(new StringField("docno", m.group(0), Field.Store.YES));
+					String docno = m.group(1);
+					doc.add(new StringField("docno", docno, Field.Store.YES));
 				}
 
 				sb.append(line);
 			}
-			doc.add(new TextField("contents", sb.toString(), Field.Store.NO));
+			if (sb.length() > 0)
+				doc.add(new TextField("contents", sb.toString(), Field.Store.NO));
+			
 		} catch (IOException e) {
 			doc = null;
 		}
