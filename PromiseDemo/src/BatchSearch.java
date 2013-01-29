@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -114,7 +115,7 @@ public class BatchSearch {
 		// Collect enough docs to show 5 pages
 		TopDocs results = searcher.search(query, 1000);
 		ScoreDoc[] hits = results.scoreDocs;
-
+		HashMap<String, String> seen = new HashMap<String, String>(1000);
 		int numTotalHits = results.totalHits;
 		
 		int start = 0;
@@ -122,7 +123,14 @@ public class BatchSearch {
 
 		for (int i = start; i < end; i++) {
 			Document doc = searcher.doc(hits[i].doc);
-			System.out.println(qid+" Q0 "+doc.get("docno")+" "+i+" "+hits[i].score+" "+runtag);
+			String docno = doc.get("docno");
+			// There are duplicate document numbers in the FR collection, so only output a given
+			// docno once.
+			if (seen.containsKey(docno)) {
+				continue;
+			}
+			seen.put(docno, docno);
+			System.out.println(qid+" Q0 "+docno+" "+i+" "+hits[i].score+" "+runtag);
 		}
 	}
 }
