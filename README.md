@@ -60,7 +60,7 @@ In the `test-data` directory are the output files I get when I do the above.  Yo
 Presentation
 ----------
 
-You can compare the output files any way you like, but the common way is to compute some numerical measures such as recall and precision based on the positions of relevant and nonrelevant documents in the output files.  The standard tool for this is [trec_eval](http://trec.nist.gov/trec_eval/).  You'll need a C compiler like gcc to build the tool, but no other infrastructure such as libraries.
+You can compare the output files any way you like, but the common way is to compute some numerical measures such as recall and precision based on the positions of relevant and nonrelevant documents in the output files.  The standard tool for this is [trec_eval](https://github.com/usnistgov/trec_eval/).  You'll need a C compiler like gcc to build the tool, but no other infrastructure such as libraries.
 
 To compute the evaluation measures, do
 
