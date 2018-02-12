@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.HashMap;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -10,6 +11,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -17,7 +19,6 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.*;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 
 /** Simple command-line based search demo. */
 public class BatchSearch {
@@ -26,6 +27,7 @@ public class BatchSearch {
 
 	/** Simple command-line based search demo. */
 	public static void main(String[] args) throws Exception {
+		long startTime = System.nanoTime();
 		String usage =
 				"Usage:\tjava BatchSearch [-index dir] [-simfn similarity] [-field f] [-queries file]";
 		if (args.length > 0 && ("-h".equals(args[0]) || "-help".equals(args[0]))) {
@@ -35,7 +37,10 @@ public class BatchSearch {
 		}
 
 		String index = "index";
-		String field = "contents";
+		String[] fields = {"contents", "title"};
+		Map <String, Float> weights = new HashMap<String, Float>();
+		weights.put("contents", 0.4f);
+		weights.put("title", 0.6f);
 		String queries = null;
 		String simstring = "default";
 
@@ -44,7 +49,7 @@ public class BatchSearch {
 				index = args[i+1];
 				i++;
 			} else if ("-field".equals(args[i])) {
-				field = args[i+1];
+				//fields.append(args[i+1]);
 				i++;
 			} else if ("-queries".equals(args[i])) {
 				queries = args[i+1];
@@ -57,7 +62,7 @@ public class BatchSearch {
 
 		Similarity simfn = null;
 		if ("default".equals(simstring)) {
-			simfn = new DefaultSimilarity();
+			simfn = new ClassicSimilarity();
 		} else if ("bm25".equals(simstring)) {
 			simfn = new BM25Similarity();
 		} else if ("dfr".equals(simstring)) {
@@ -74,10 +79,10 @@ public class BatchSearch {
 			System.exit(0);
 		}
 		
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(index)));
+		IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(index).toPath()));
 		IndexSearcher searcher = new IndexSearcher(reader);
 		searcher.setSimilarity(simfn);
-		Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_41);
+		Analyzer analyzer = new CustomAnalyzer();
 		
 		BufferedReader in = null;
 		if (queries != null) {
@@ -85,7 +90,7 @@ public class BatchSearch {
 		} else {
 			in = new BufferedReader(new InputStreamReader(new FileInputStream("queries"), "UTF-8"));
 		}
-		QueryParser parser = new QueryParser(Version.LUCENE_41, field, analyzer);
+		QueryParser parser = new QueryParser("contents", analyzer);
 		while (true) {
 			String line = in.readLine();
 
@@ -99,13 +104,29 @@ public class BatchSearch {
 			}
 			
 			String[] pair = line.split(" ", 2);
-			Query query = parser.parse(pair[1]);
-
+			String qs = buildQueryString(pair[1].trim().replaceAll(" +", " "), true);
+			Query query = parser.parse(qs);
+			// System.out.println(qs);
 			doBatchSearch(in, searcher, pair[0], query, simstring);
 		}
 		reader.close();
+		long endTime   = System.nanoTime();
+		long totalTime = endTime - startTime;
+		//System.out.printf("Query Processing time: %.4fs\n", (float)totalTime/1000000000);
 	}
 
+	public static String buildQueryString(String query, boolean conjunctive) {
+		if(!conjunctive) {
+			return "contents:" + query;
+		} else {
+			String val = "";
+			for(String term : query.split(" ")) {
+				val += "contents:" + term + " AND ";
+			}
+			val = val.replaceAll(" AND $","");
+			return val;
+		}
+	}
 	/**
 	 * This function performs a top-1000 search for the query as a basic TREC run.
 	 */
@@ -116,7 +137,7 @@ public class BatchSearch {
 		TopDocs results = searcher.search(query, 1000);
 		ScoreDoc[] hits = results.scoreDocs;
 		HashMap<String, String> seen = new HashMap<String, String>(1000);
-		int numTotalHits = results.totalHits;
+		int numTotalHits = (int)results.totalHits;
 		
 		int start = 0;
 		int end = Math.min(numTotalHits, 1000);

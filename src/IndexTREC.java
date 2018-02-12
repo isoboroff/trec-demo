@@ -10,7 +10,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Version;
 
 
 public class IndexTREC {
@@ -52,9 +51,9 @@ public class IndexTREC {
 		try {
 			System.out.println("Indexing to directory '" + indexPath + "'...");
 
-			Directory dir = FSDirectory.open(new File(indexPath));
-			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_41);
-			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_41, analyzer);
+			Directory dir = FSDirectory.open(new File(indexPath).toPath());
+			Analyzer analyzer = new CustomAnalyzer();
+			IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
 
 			if (create) {
 				// Create a new index in the directory, removing any
@@ -70,7 +69,7 @@ public class IndexTREC {
 			// buffer.  But if you do this, increase the max heap
 			// size to the JVM (eg add -Xmx512m or -Xmx1g):
 			//
-			iwc.setRAMBufferSizeMB(256.0);
+			iwc.setRAMBufferSizeMB(1024.0);
 
 			IndexWriter writer = new IndexWriter(dir, iwc);
 			indexDocs(writer, docDir);
