@@ -11,9 +11,9 @@
     <property name="source" value="1.6"/>
     <path id="PromiseDemo.classpath">
         <pathelement location="bin"/>
-        <pathelement location="lib/lucene-core-4.1.0.jar"/>
-        <pathelement location="lib/lucene-analyzers-common-4.1.0.jar"/>
-        <pathelement location="lib/lucene-queryparser-4.1.0.jar"/>
+        <pathelement location="lib/lucene-core-7.2.1.jar"/>
+        <pathelement location="lib/lucene-analyzers-common-7.2.1.jar"/>
+        <pathelement location="lib/lucene-queryparser-7.2.1.jar"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>

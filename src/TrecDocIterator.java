@@ -34,7 +34,9 @@ public class TrecDocIterator implements Iterator<Document> {
 		try {
 			String line;
 			Pattern docno_tag = Pattern.compile("<DOCNO>\\s*(\\S+)\\s*<");
+			Pattern title_tag = Pattern.compile("^<HEADLINE>(.*)</HEADLINE>$");
 			boolean in_doc = false;
+			boolean in_body = false;
 			while (true) {
 				line = rdr.readLine();
 				if (line == null) {
@@ -49,8 +51,20 @@ public class TrecDocIterator implements Iterator<Document> {
 				}
 				if (line.startsWith("</DOC>")) {
 					in_doc = false;
-					sb.append(line);
 					break;
+				}
+				if (line.startsWith("<TEXT>")) {
+					in_body = true;
+					sb.append(line.replaceFirst("^<TEXT>", ""));
+					continue;
+				}
+				if (in_body) {
+					if (line.startsWith("</TEXT>")) {
+						in_body = false;
+						continue;
+					}
+					sb.append(line);
+					continue;
 				}
 
 				Matcher m = docno_tag.matcher(line);
@@ -59,10 +73,16 @@ public class TrecDocIterator implements Iterator<Document> {
 					doc.add(new StringField("docno", docno, Field.Store.YES));
 				}
 
-				sb.append(line);
+				m = title_tag.matcher(line);
+                if (m.find()) {
+					String title = m.group(1);
+					StringField field = new StringField("title", title, Field.Store.YES);
+					doc.add(field);
+				}
 			}
-			if (sb.length() > 0)
-				doc.add(new TextField("contents", sb.toString(), Field.Store.NO));
+			if (sb.length() > 0) {
+				doc.add(new TextField("contents", sb.toString(), Field.Store.YES));
+			}
 			
 		} catch (IOException e) {
 			doc = null;
